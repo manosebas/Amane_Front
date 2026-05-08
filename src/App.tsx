@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
-import Register from './pages/Register'
+import Registro from './pages/auth/Registro'
 import Dashboard from './pages/Dashboard'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
@@ -11,7 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/registro" element={<Register />} />
+        <Route path="/auth/registro" element={<Registro />} />
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Dashboard />
