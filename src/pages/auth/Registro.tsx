@@ -79,7 +79,8 @@ export default function Registro() {
     setEnviando(true)
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/registro`, {
+      const backendUrl = (import.meta.env.VITE_BACKEND_URL ?? '').replace(/\/+$/, '')
+      const res = await fetch(`${backendUrl}/api/auth/registro`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -94,10 +95,11 @@ export default function Registro() {
         }),
       })
 
-      const data = await res.json()
+      const text = await res.text()
+      const data = text ? (() => { try { return JSON.parse(text) } catch { return null } })() : null
 
       if (!res.ok) {
-        setError(data.error ?? 'Error al registrarse. Intenta nuevamente.')
+        setError(data?.error ?? `Error del servidor (${res.status}). Intenta nuevamente.`)
       } else {
         const { error: loginError } = await supabase.auth.signInWithPassword({
           email: form.email,
