@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { fetchMe } from '../lib/api'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -14,12 +15,13 @@ export default function Login() {
     setError('')
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setError(error.message)
-    } else {
-      navigate('/dashboard')
+    } else if (data.session) {
+      const me = await fetchMe(data.session.access_token)
+      navigate(me?.rol === 'admin' ? '/admin' : '/dashboard')
     }
     setLoading(false)
   }
@@ -57,7 +59,7 @@ export default function Login() {
           </button>
         </form>
         <p className="auth-footer">
-          ¿No tienes cuenta? <Link to="/registro">Crear cuenta</Link>
+          ¿No tienes cuenta? <Link to="/auth/registro">Registrarse</Link>
         </p>
       </div>
     </div>

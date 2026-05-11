@@ -397,3 +397,81 @@ body {
   text-decoration: none;
   font-weight: 500;
 }
+
+/* Admin layout */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  width: 260px;
+  background: #0f172a;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.admin-logo {
+  padding: 1.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #fff;
+  border-bottom: 1px solid #1e293b;
+}
+
+.admin-nav {
+  flex: 1;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-nav-link {
+  padding: 0.75rem 1.5rem;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-left: 3px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-nav-link:hover {
+  background: #1e293b;
+  color: #fff;
+}
+
+.admin-nav-link.active {
+  background: #1e293b;
+  color: #fff;
+  border-left-color: var(--color-primary);
+}
+
+.admin-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.admin-footer-email {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  word-break: break-all;
+}
+
+.admin-main {
+  flex: 1;
+  padding: 2rem;
+  background: #f8fafc;
+  overflow-x: auto;
+}
+
+.admin-page-titulo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}

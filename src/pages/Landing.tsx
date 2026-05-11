@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 
 export default function Landing() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, rol } = useAuth()
 
   return (
     <div className="landing">
@@ -11,7 +11,7 @@ export default function Landing() {
         <span className="nav-logo">Amané</span>
         <div className="nav-actions">
           {user ? (
-            <button className="btn btn-primary" onClick={() => navigate('/dashboard')}>
+            <button className="btn btn-primary" onClick={() => navigate(rol === 'admin' ? '/admin' : '/dashboard')}>
               Mi cuenta
             </button>
           ) : (
