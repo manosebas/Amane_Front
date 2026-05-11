@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
 type Club = {
@@ -31,13 +31,13 @@ const FORM_INICIAL: FormData = {
 }
 
 export default function Registro() {
+  const navigate = useNavigate()
   const [clubes, setClubes] = useState<Club[]>([])
   const [cargando, setCargando] = useState(true)
   const [clubSeleccionado, setClubSeleccionado] = useState<Club | null>(null)
   const [form, setForm] = useState<FormData>(FORM_INICIAL)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [exito, setExito] = useState(false)
 
   useEffect(() => {
     supabase
@@ -99,30 +99,21 @@ export default function Registro() {
       if (!res.ok) {
         setError(data.error ?? 'Error al registrarse. Intenta nuevamente.')
       } else {
-        setClubSeleccionado(null)
-        setExito(true)
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email: form.email,
+          password: form.password,
+        })
+        if (loginError) {
+          navigate('/login')
+        } else {
+          navigate('/dashboard')
+        }
       }
     } catch {
       setError('Error de conexión. Verifica tu internet e intenta nuevamente.')
     }
 
     setEnviando(false)
-  }
-
-  if (exito) {
-    return (
-      <div className="auth-page">
-        <div className="auth-card">
-          <h2>¡Registro exitoso!</h2>
-          <p className="success-msg" style={{ marginTop: '1rem' }}>
-            Revisa tu correo electrónico y confirma tu cuenta para poder ingresar.
-          </p>
-          <Link to="/login" className="btn btn-primary btn-block" style={{ marginTop: '1.5rem', display: 'block', textDecoration: 'none', textAlign: 'center' }}>
-            Ir a iniciar sesión
-          </Link>
-        </div>
-      </div>
-    )
   }
 
   return (
