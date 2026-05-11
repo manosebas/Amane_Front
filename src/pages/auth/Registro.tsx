@@ -17,7 +17,9 @@ type Club = {
   logo_url: string | null
   terminos_pdf_url: string | null
   mostrar_es_socio: boolean
+  es_socio_requerido: boolean
   mostrar_terminos: boolean
+  terminos_requerido: boolean
   checkboxes: ClubCheckbox[]
 }
 
@@ -28,7 +30,7 @@ type FormData = {
   cedula: string
   telefono: string
   password: string
-  es_socio: boolean
+  es_socio: boolean | null
   acepto_terminos: boolean
 }
 
@@ -39,7 +41,7 @@ const FORM_INICIAL: FormData = {
   cedula: '',
   telefono: '',
   password: '',
-  es_socio: false,
+  es_socio: null,
   acepto_terminos: false,
 }
 
@@ -59,7 +61,8 @@ export default function Registro() {
       .from('clubes')
       .select(`
         id, nombre, descripcion, logo_url, terminos_pdf_url,
-        mostrar_es_socio, mostrar_terminos,
+        mostrar_es_socio, es_socio_requerido,
+        mostrar_terminos, terminos_requerido,
         checkboxes:club_checkboxes(id, etiqueta, requerido, orden)
       `)
       .eq('activo', true)
@@ -95,12 +98,19 @@ export default function Registro() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
 
-    if (clubSeleccionado!.mostrar_terminos && !form.acepto_terminos) {
+    const club = clubSeleccionado!
+
+    if (club.mostrar_es_socio && club.es_socio_requerido && form.es_socio === null) {
+      setError('Debes indicar si eres socio del club.')
+      return
+    }
+
+    if (club.mostrar_terminos && club.terminos_requerido && !form.acepto_terminos) {
       setError('Debes aceptar los términos y condiciones.')
       return
     }
 
-    const requeridosNoAceptados = clubSeleccionado!.checkboxes
+    const requeridosNoAceptados = club.checkboxes
       .filter(cb => cb.requerido && respuestas[cb.id] !== true)
 
     if (requeridosNoAceptados.length > 0) {
@@ -124,7 +134,8 @@ export default function Registro() {
           telefono: form.telefono,
           password: form.password,
           es_socio: form.es_socio,
-          club_id: clubSeleccionado!.id,
+          acepto_terminos: form.acepto_terminos,
+          club_id: club.id,
           respuestas: Object.entries(respuestas).map(([checkbox_id, valor]) => ({
             checkbox_id,
             valor,
@@ -265,17 +276,36 @@ export default function Registro() {
                 />
               </div>
 
-              <div className="checkboxes">
-                {clubSeleccionado.mostrar_es_socio && (
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox" name="es_socio"
-                      checked={form.es_socio} onChange={handleChange}
-                    />
-                    <span>Soy socio del club</span>
-                  </label>
-                )}
+              {clubSeleccionado.mostrar_es_socio && (
+                <div className="sino-group">
+                  <span className="sino-label">
+                    Soy socio del club
+                    {clubSeleccionado.es_socio_requerido && <span className="requerido-mark"> *</span>}
+                  </span>
+                  <div className="sino-options">
+                    <label className={`sino-option ${form.es_socio === true ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="es_socio_radio"
+                        checked={form.es_socio === true}
+                        onChange={() => setForm(prev => ({ ...prev, es_socio: true }))}
+                      />
+                      <span>Sí</span>
+                    </label>
+                    <label className={`sino-option ${form.es_socio === false ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="es_socio_radio"
+                        checked={form.es_socio === false}
+                        onChange={() => setForm(prev => ({ ...prev, es_socio: false }))}
+                      />
+                      <span>No</span>
+                    </label>
+                  </div>
+                </div>
+              )}
 
+              <div className="checkboxes">
                 {clubSeleccionado.checkboxes.map(cb => (
                   <label key={cb.id} className="checkbox-label">
                     <input
@@ -292,7 +322,6 @@ export default function Registro() {
                     <input
                       type="checkbox" name="acepto_terminos"
                       checked={form.acepto_terminos} onChange={handleChange}
-                      required
                     />
                     <span>
                       Acepto los{' '}
@@ -307,6 +336,7 @@ export default function Registro() {
                       ) : (
                         'términos y condiciones'
                       )}
+                      {clubSeleccionado.terminos_requerido && <span className="requerido-mark"> *</span>}
                     </span>
                   </label>
                 )}

@@ -885,3 +885,155 @@ body {
   border: none;
   background: #f1f5f9;
 }
+
+/* Estado switch (Activo/Inactivo en modal de club) */
+.estado-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.25rem;
+  border: 1px solid;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.estado-control.estado-on {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.estado-control.estado-off {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.estado-switch {
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.estado-switch.on {
+  background: #16a34a;
+}
+
+.estado-switch.off {
+  background: #94a3b8;
+}
+
+.estado-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.estado-switch.on .estado-thumb {
+  transform: translateX(22px);
+}
+
+.estado-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.estado-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.estado-on .estado-label {
+  color: #166534;
+}
+
+.estado-off .estado-label {
+  color: #991b1b;
+}
+
+.estado-desc {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* Grupo de config con sub-toggle "Obligatorio" */
+.config-grupo {
+  background: #f8fafc;
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.config-sub {
+  margin-left: 1.625rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--color-border);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* Selector Sí / No en registro */
+.sino-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sino-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.sino-options {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.sino-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.15s;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.sino-option:hover {
+  border-color: var(--color-primary);
+}
+
+.sino-option.selected {
+  border-color: var(--color-primary);
+  background: #eff6ff;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.sino-option input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}

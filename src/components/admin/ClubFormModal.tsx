@@ -17,7 +17,9 @@ type FormState = {
   descripcion: string
   activo: boolean
   mostrar_es_socio: boolean
+  es_socio_requerido: boolean
   mostrar_terminos: boolean
+  terminos_requerido: boolean
   checkboxes: ClubCheckbox[]
 }
 
@@ -26,7 +28,9 @@ const FORM_VACIO: FormState = {
   descripcion: '',
   activo: true,
   mostrar_es_socio: true,
+  es_socio_requerido: false,
   mostrar_terminos: true,
+  terminos_requerido: true,
   checkboxes: [],
 }
 
@@ -50,7 +54,9 @@ export function ClubFormModal({ club, open, onClose, onGuardado }: Props) {
         descripcion: club.descripcion ?? '',
         activo: club.activo,
         mostrar_es_socio: club.mostrar_es_socio,
+        es_socio_requerido: club.es_socio_requerido,
         mostrar_terminos: club.mostrar_terminos,
+        terminos_requerido: club.terminos_requerido,
         checkboxes: club.checkboxes ?? [],
       })
       setLogoPreview(club.logo_url)
@@ -127,8 +133,7 @@ export function ClubFormModal({ club, open, onClose, onGuardado }: Props) {
       return
     }
 
-    const checkboxesInvalidos = form.checkboxes.filter(cb => !cb.etiqueta.trim())
-    if (checkboxesInvalidos.length > 0) {
+    if (form.checkboxes.some(cb => !cb.etiqueta.trim())) {
       setError('Todos los checkboxes personalizados deben tener etiqueta.')
       return
     }
@@ -192,6 +197,28 @@ export function ClubFormModal({ club, open, onClose, onGuardado }: Props) {
             </button>
           </div>
 
+          <div className={`estado-control ${form.activo ? 'estado-on' : 'estado-off'}`}>
+            <button
+              type="button"
+              className={`estado-switch ${form.activo ? 'on' : 'off'}`}
+              onClick={() => setForm({ ...form, activo: !form.activo })}
+              aria-pressed={form.activo}
+              aria-label="Toggle estado del club"
+            >
+              <span className="estado-thumb" />
+            </button>
+            <div className="estado-info">
+              <span className="estado-label">
+                {form.activo ? 'Club activo' : 'Club inactivo'}
+              </span>
+              <span className="estado-desc">
+                {form.activo
+                  ? 'Visible en el registro de padres'
+                  : 'Oculto del registro de padres'}
+              </span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="form-club">
             <section className="form-seccion">
               <h3 className="form-seccion-titulo">Información general</h3>
@@ -218,15 +245,6 @@ export function ClubFormModal({ club, open, onClose, onGuardado }: Props) {
                   maxLength={500}
                 />
               </div>
-
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={form.activo}
-                  onChange={e => setForm({ ...form, activo: e.target.checked })}
-                />
-                <span>Club activo (visible para registro)</span>
-              </label>
             </section>
 
             <section className="form-seccion">
@@ -247,23 +265,47 @@ export function ClubFormModal({ club, open, onClose, onGuardado }: Props) {
             <section className="form-seccion">
               <h3 className="form-seccion-titulo">Configuración del registro</h3>
 
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={form.mostrar_es_socio}
-                  onChange={e => setForm({ ...form, mostrar_es_socio: e.target.checked })}
-                />
-                <span>Mostrar checkbox "Soy socio del club"</span>
-              </label>
+              <div className="config-grupo">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={form.mostrar_es_socio}
+                    onChange={e => setForm({ ...form, mostrar_es_socio: e.target.checked })}
+                  />
+                  <span>Mostrar "Soy socio del club" (Sí/No)</span>
+                </label>
+                {form.mostrar_es_socio && (
+                  <label className="checkbox-label config-sub">
+                    <input
+                      type="checkbox"
+                      checked={form.es_socio_requerido}
+                      onChange={e => setForm({ ...form, es_socio_requerido: e.target.checked })}
+                    />
+                    <span>Obligatorio responder</span>
+                  </label>
+                )}
+              </div>
 
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={form.mostrar_terminos}
-                  onChange={e => setForm({ ...form, mostrar_terminos: e.target.checked })}
-                />
-                <span>Mostrar checkbox "Acepto términos y condiciones"</span>
-              </label>
+              <div className="config-grupo">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={form.mostrar_terminos}
+                    onChange={e => setForm({ ...form, mostrar_terminos: e.target.checked })}
+                  />
+                  <span>Mostrar "Acepto términos y condiciones"</span>
+                </label>
+                {form.mostrar_terminos && (
+                  <label className="checkbox-label config-sub">
+                    <input
+                      type="checkbox"
+                      checked={form.terminos_requerido}
+                      onChange={e => setForm({ ...form, terminos_requerido: e.target.checked })}
+                    />
+                    <span>Obligatorio aceptar</span>
+                  </label>
+                )}
+              </div>
             </section>
 
             {form.mostrar_terminos && (
@@ -314,7 +356,7 @@ export function ClubFormModal({ club, open, onClose, onGuardado }: Props) {
                           checked={cb.requerido}
                           onChange={e => actualizarCheckbox(i, { requerido: e.target.checked })}
                         />
-                        <span>Requerido</span>
+                        <span>Obligatorio</span>
                       </label>
                       <button
                         type="button"
