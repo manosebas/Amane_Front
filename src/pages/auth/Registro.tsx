@@ -1,11 +1,24 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { PdfViewerModal } from '../../components/PdfViewerModal'
+
+type ClubCheckbox = {
+  id: string
+  etiqueta: string
+  requerido: boolean
+  orden: number
+}
 
 type Club = {
   id: string
   nombre: string
   descripcion: string | null
+  logo_url: string | null
+  terminos_pdf_url: string | null
+  mostrar_es_socio: boolean
+  mostrar_terminos: boolean
+  checkboxes: ClubCheckbox[]
 }
 
 type FormData = {
@@ -36,17 +49,27 @@ export default function Registro() {
   const [cargando, setCargando] = useState(true)
   const [clubSeleccionado, setClubSeleccionado] = useState<Club | null>(null)
   const [form, setForm] = useState<FormData>(FORM_INICIAL)
+  const [respuestas, setRespuestas] = useState<Record<string, boolean>>({})
+  const [mostrarPdf, setMostrarPdf] = useState(false)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
     supabase
       .from('clubes')
-      .select('id, nombre, descripcion')
+      .select(`
+        id, nombre, descripcion, logo_url, terminos_pdf_url,
+        mostrar_es_socio, mostrar_terminos,
+        checkboxes:club_checkboxes(id, etiqueta, requerido, orden)
+      `)
       .eq('activo', true)
       .order('nombre')
       .then(({ data }) => {
-        setClubes(data ?? [])
+        const ordenados = (data ?? []).map(c => ({
+          ...c,
+          checkboxes: (c.checkboxes ?? []).sort((a: ClubCheckbox, b: ClubCheckbox) => a.orden - b.orden),
+        }))
+        setClubes(ordenados as Club[])
         setCargando(false)
       })
   }, [])
@@ -54,6 +77,7 @@ export default function Registro() {
   function abrirModal(club: Club) {
     setClubSeleccionado(club)
     setForm(FORM_INICIAL)
+    setRespuestas({})
     setError('')
   }
 
@@ -70,8 +94,17 @@ export default function Registro() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!form.acepto_terminos) {
+
+    if (clubSeleccionado!.mostrar_terminos && !form.acepto_terminos) {
       setError('Debes aceptar los términos y condiciones.')
+      return
+    }
+
+    const requeridosNoAceptados = clubSeleccionado!.checkboxes
+      .filter(cb => cb.requerido && respuestas[cb.id] !== true)
+
+    if (requeridosNoAceptados.length > 0) {
+      setError(`Debes aceptar: "${requeridosNoAceptados[0].etiqueta}".`)
       return
     }
 
@@ -92,6 +125,10 @@ export default function Registro() {
           password: form.password,
           es_socio: form.es_socio,
           club_id: clubSeleccionado!.id,
+          respuestas: Object.entries(respuestas).map(([checkbox_id, valor]) => ({
+            checkbox_id,
+            valor,
+          })),
         }),
       })
 
@@ -105,11 +142,7 @@ export default function Registro() {
           email: form.email,
           password: form.password,
         })
-        if (loginError) {
-          navigate('/login')
-        } else {
-          navigate('/dashboard')
-        }
+        navigate(loginError ? '/login' : '/dashboard')
       }
     } catch {
       setError('Error de conexión. Verifica tu internet e intenta nuevamente.')
@@ -137,6 +170,13 @@ export default function Registro() {
           <div className="clubes-grid">
             {clubes.map(club => (
               <button key={club.id} className="club-card" onClick={() => abrirModal(club)}>
+                {club.logo_url ? (
+                  <img src={club.logo_url} alt={club.nombre} className="club-card-logo" />
+                ) : (
+                  <div className="club-card-logo-placeholder">
+                    {club.nombre.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <span className="club-card-nombre">{club.nombre}</span>
                 {club.descripcion && (
                   <span className="club-card-desc">{club.descripcion}</span>
@@ -158,7 +198,12 @@ export default function Registro() {
                 <h2>Información de contacto</h2>
                 <p className="modal-club">Club: <strong>{clubSeleccionado.nombre}</strong></p>
               </div>
-              <button className="modal-close" onClick={cerrarModal} aria-label="Cerrar" disabled={enviando}>
+              <button
+                className="modal-close"
+                onClick={cerrarModal}
+                aria-label="Cerrar"
+                disabled={enviando}
+              >
                 ×
               </button>
             </div>
@@ -221,21 +266,50 @@ export default function Registro() {
               </div>
 
               <div className="checkboxes">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox" name="es_socio"
-                    checked={form.es_socio} onChange={handleChange}
-                  />
-                  <span>Soy socio del club</span>
-                </label>
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox" name="acepto_terminos"
-                    checked={form.acepto_terminos} onChange={handleChange}
-                    required
-                  />
-                  <span>Acepto los <a href="/terminos" target="_blank" rel="noopener noreferrer">términos y condiciones</a></span>
-                </label>
+                {clubSeleccionado.mostrar_es_socio && (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox" name="es_socio"
+                      checked={form.es_socio} onChange={handleChange}
+                    />
+                    <span>Soy socio del club</span>
+                  </label>
+                )}
+
+                {clubSeleccionado.checkboxes.map(cb => (
+                  <label key={cb.id} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={respuestas[cb.id] ?? false}
+                      onChange={e => setRespuestas(prev => ({ ...prev, [cb.id]: e.target.checked }))}
+                    />
+                    <span>{cb.etiqueta}{cb.requerido && <span className="requerido-mark"> *</span>}</span>
+                  </label>
+                ))}
+
+                {clubSeleccionado.mostrar_terminos && (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox" name="acepto_terminos"
+                      checked={form.acepto_terminos} onChange={handleChange}
+                      required
+                    />
+                    <span>
+                      Acepto los{' '}
+                      {clubSeleccionado.terminos_pdf_url ? (
+                        <button
+                          type="button"
+                          className="link-button"
+                          onClick={() => setMostrarPdf(true)}
+                        >
+                          términos y condiciones
+                        </button>
+                      ) : (
+                        'términos y condiciones'
+                      )}
+                    </span>
+                  </label>
+                )}
               </div>
 
               {error && <p className="error-msg">{error}</p>}
@@ -250,6 +324,15 @@ export default function Registro() {
             </form>
           </div>
         </div>
+      )}
+
+      {clubSeleccionado?.terminos_pdf_url && (
+        <PdfViewerModal
+          url={clubSeleccionado.terminos_pdf_url}
+          titulo="Términos y condiciones"
+          open={mostrarPdf}
+          onClose={() => setMostrarPdf(false)}
+        />
       )}
     </div>
   )
