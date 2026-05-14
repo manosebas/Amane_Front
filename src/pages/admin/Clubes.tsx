@@ -97,7 +97,6 @@ export default function Clubes() {
               key={club.id}
               club={club}
               onEditar={abrirEditar}
-              onEliminar={setEliminando}
             />
           ))}
         </div>
@@ -108,6 +107,7 @@ export default function Clubes() {
         open={modalAbierto}
         onClose={cerrarModal}
         onGuardado={() => { cerrarModal(); cargar() }}
+        onEliminar={club => { cerrarModal(); setEliminando(club) }}
       />
 
       {eliminando && (

@@ -10,6 +10,7 @@ type Props = {
   open: boolean
   onClose: () => void
   onGuardado: () => void
+  onEliminar?: (club: Club) => void
 }
 
 type FormState = {
@@ -34,7 +35,7 @@ const FORM_VACIO: FormState = {
   checkboxes: [],
 }
 
-export function ClubFormModal({ club, open, onClose, onGuardado }: Props) {
+export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: Props) {
   const [form, setForm] = useState<FormState>(FORM_VACIO)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -375,6 +376,16 @@ export function ClubFormModal({ club, open, onClose, onGuardado }: Props) {
             {error && <p className="error-msg">{error}</p>}
 
             <div className="form-acciones">
+              {editando && onEliminar && club && (
+                <button
+                  type="button"
+                  className="btn-eliminar-form"
+                  onClick={() => onEliminar(club)}
+                  disabled={guardando}
+                >
+                  Eliminar club
+                </button>
+              )}
               <button
                 type="button"
                 className="btn btn-secondary"

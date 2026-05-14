@@ -11,9 +11,10 @@ type Props = {
   open: boolean
   onClose: () => void
   onGuardado: () => void
+  onEliminar?: (actividad: Actividad) => void
 }
 
-export function ActividadFormModal({ actividad, categorias, open, onClose, onGuardado }: Props) {
+export function ActividadFormModal({ actividad, categorias, open, onClose, onGuardado, onEliminar }: Props) {
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
@@ -131,6 +132,16 @@ export function ActividadFormModal({ actividad, categorias, open, onClose, onGua
           {error && <p className="error-msg">{error}</p>}
 
           <div className="form-acciones">
+            {editando && onEliminar && actividad && (
+              <button
+                type="button"
+                className="btn-eliminar-form"
+                onClick={() => onEliminar(actividad)}
+                disabled={guardando}
+              >
+                Eliminar actividad
+              </button>
+            )}
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={guardando}>
               Cancelar
             </button>

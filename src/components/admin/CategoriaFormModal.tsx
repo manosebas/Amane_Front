@@ -10,9 +10,10 @@ type Props = {
   open: boolean
   onClose: () => void
   onGuardado: () => void
+  onEliminar?: (categoria: Categoria) => void
 }
 
-export function CategoriaFormModal({ categoria, open, onClose, onGuardado }: Props) {
+export function CategoriaFormModal({ categoria, open, onClose, onGuardado, onEliminar }: Props) {
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [error, setError] = useState('')
@@ -110,6 +111,16 @@ export function CategoriaFormModal({ categoria, open, onClose, onGuardado }: Pro
           {error && <p className="error-msg">{error}</p>}
 
           <div className="form-acciones">
+            {editando && onEliminar && categoria && (
+              <button
+                type="button"
+                className="btn-eliminar-form"
+                onClick={() => onEliminar(categoria)}
+                disabled={guardando}
+              >
+                Eliminar categoría
+              </button>
+            )}
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={guardando}>
               Cancelar
             </button>
