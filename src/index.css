@@ -1102,21 +1102,18 @@ body {
   border-color: var(--color-primary);
 }
 
-/* Icono auto-generado (avatar inicial+color) */
+/* Icono auto-generado (emoji según el nombre) */
 .icono-auto {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  color: #fff;
-  font-weight: 700;
   user-select: none;
   flex-shrink: 0;
-  letter-spacing: -0.5px;
+  line-height: 1;
 }
-.icono-auto-sm { width: 32px; height: 32px; font-size: 0.8rem; }
-.icono-auto-md { width: 48px; height: 48px; font-size: 1.05rem; }
-.icono-auto-lg { width: 72px; height: 72px; font-size: 1.65rem; }
+.icono-auto-sm { width: 32px; height: 32px; font-size: 24px; }
+.icono-auto-md { width: 48px; height: 48px; font-size: 36px; }
+.icono-auto-lg { width: 72px; height: 72px; font-size: 54px; }
 
 /* Preview de icono en modales */
 .icono-preview {

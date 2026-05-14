@@ -1,4 +1,4 @@
-import { colorDesdeNombre, inicialesDesdeNombre } from '../../lib/iconos'
+import { iconoDesdeNombre } from '../../lib/iconos'
 
 type Props = {
   nombre: string
@@ -7,12 +7,12 @@ type Props = {
 
 export function IconoAuto({ nombre, size = 'md' }: Props) {
   return (
-    <div
+    <span
       className={`icono-auto icono-auto-${size}`}
-      style={{ background: colorDesdeNombre(nombre) }}
-      aria-hidden="true"
+      role="img"
+      aria-label={nombre}
     >
-      {inicialesDesdeNombre(nombre)}
-    </div>
+      {iconoDesdeNombre(nombre)}
+    </span>
   )
 }
