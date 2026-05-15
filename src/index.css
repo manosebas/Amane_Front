@@ -1343,3 +1343,189 @@ body {
   border-top: 1px solid var(--color-border);
 }
 
+/* --- Filtros y tablas admin --- */
+.filtros {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.5rem 0 1.2rem;
+}
+.filtros label {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+.filtros select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: white;
+}
+
+.admin-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.admin-tabla th,
+.admin-tabla td {
+  text-align: left;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.admin-tabla thead {
+  background: #f8fafc;
+}
+.admin-tabla th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--color-muted);
+}
+.admin-tabla tr:last-child td {
+  border-bottom: none;
+}
+.acciones-cell {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.back-link {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  text-decoration: none;
+  margin-bottom: 0.3rem;
+}
+.back-link:hover { color: var(--color-text); }
+
+/* --- Calendario semanal de slots --- */
+.semana-calendario {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  gap: 0.6rem;
+  overflow-x: auto;
+}
+.semana-dia {
+  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+.semana-dia-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.semana-dia-header h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.semana-dia-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  flex: 1;
+}
+
+.slot-card {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-family: inherit;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.slot-card:hover {
+  border-color: var(--color-primary, #4f46e5);
+}
+.slot-card-hora {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+.slot-card-act {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.slot-card-grupo {
+  font-size: 0.8rem;
+}
+.slot-card-meta {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.slot-card-estado {
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.slot-padre.slot-inscrito {
+  border-color: #166534;
+  background: #f0fdf4;
+}
+.slot-padre.slot-inscrito .slot-card-estado { color: #166534; }
+.slot-padre.slot-lleno {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.slot-padre.slot-lleno .slot-card-estado { color: #991b1b; }
+
+/* --- Dashboard del padre --- */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.ninos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.9rem;
+}
+.nino-card {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+.nino-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.nino-card-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.link-button-danger {
+  color: #991b1b !important;
+}
+

@@ -26,6 +26,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/grupos" className={navClass}>Grupos</NavLink>
           <NavLink to="/admin/personal" className={navClass}>Personal</NavLink>
           <NavLink to="/admin/club-actividad" className={navClass}>Club-Actividad</NavLink>
+          <NavLink to="/admin/semanas" className={navClass}>Semanas</NavLink>
           <NavLink to="/admin/gestion" className={navClass}>Gestión</NavLink>
         </nav>
 
