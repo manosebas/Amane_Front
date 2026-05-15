@@ -1,7 +1,9 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { supabase } from '../../lib/supabase'
+import { api } from '../../lib/api'
 import { PdfViewerModal } from '../PdfViewerModal'
 import type { Club, ClubCheckbox } from '../../types/club'
+import type { Grupo } from '../../types/grupo'
 
 const BACKEND = (import.meta.env.VITE_BACKEND_URL ?? '').replace(/\/+$/, '')
 
@@ -18,6 +20,7 @@ type FormState = {
   descripcion: string
   activo: boolean
   checkboxes: ClubCheckbox[]
+  grupo_ids: string[]
 }
 
 const FORM_VACIO: FormState = {
@@ -25,10 +28,12 @@ const FORM_VACIO: FormState = {
   descripcion: '',
   activo: true,
   checkboxes: [],
+  grupo_ids: [],
 }
 
 export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: Props) {
   const [form, setForm] = useState<FormState>(FORM_VACIO)
+  const [grupos, setGrupos] = useState<Grupo[]>([])
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
@@ -45,6 +50,7 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
         descripcion: club.descripcion ?? '',
         activo: club.activo,
         checkboxes: (club.checkboxes ?? []).map(cb => ({ ...cb, pdf_file: null })),
+        grupo_ids: club.grupo_ids ?? [],
       })
       setLogoPreview(club.logo_url)
     } else {
@@ -53,7 +59,28 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
     }
     setLogoFile(null)
     setError('')
+
+    api('/api/admin/grupos').then(async res => {
+      const data = await res.json().catch(() => null)
+      if (res.ok) {
+        const gs = (data?.grupos ?? []) as Grupo[]
+        setGrupos(gs)
+        if (!club) {
+          // Nuevo club: por default todos los grupos asignados
+          setForm(prev => ({ ...prev, grupo_ids: gs.map(g => g.id) }))
+        }
+      }
+    })
   }, [open, club])
+
+  function toggleGrupo(id: string) {
+    setForm(prev => ({
+      ...prev,
+      grupo_ids: prev.grupo_ids.includes(id)
+        ? prev.grupo_ids.filter(g => g !== id)
+        : [...prev.grupo_ids, id],
+    }))
+  }
 
   function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -146,6 +173,7 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
           requerido: cb.requerido,
           pdf_url: cb.pdf_url && !cb.pdf_url.startsWith('blob:') ? cb.pdf_url : null,
         })),
+        grupo_ids: form.grupo_ids,
       }
 
       const fd = new FormData()
@@ -262,6 +290,28 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
                   <input type="file" accept="image/*" onChange={handleLogoChange} hidden />
                 </label>
               </div>
+            </section>
+
+            <section className="form-seccion">
+              <h3 className="form-seccion-titulo">Grupos participantes</h3>
+              {grupos.length === 0 ? (
+                <p className="text-muted form-vacio">
+                  No hay grupos creados. Ve al módulo de Grupos para crearlos.
+                </p>
+              ) : (
+                <div className="checkboxes">
+                  {grupos.map(g => (
+                    <label key={g.id} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={form.grupo_ids.includes(g.id)}
+                        onChange={() => toggleGrupo(g.id)}
+                      />
+                      <span>{g.nombre} <span className="text-muted">({g.edad_min}–{g.edad_max} años)</span></span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="form-seccion">

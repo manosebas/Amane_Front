@@ -7,6 +7,9 @@ import AdminLayout from './layouts/AdminLayout'
 import AdminInicio from './pages/admin/Inicio'
 import AdminClubes from './pages/admin/Clubes'
 import AdminActividades from './pages/admin/Actividades'
+import AdminGrupos from './pages/admin/Grupos'
+import AdminPersonal from './pages/admin/Personal'
+import AdminClubActividad from './pages/admin/ClubActividad'
 import AdminGestion from './pages/admin/Gestion'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
@@ -32,6 +35,9 @@ function App() {
           <Route index element={<AdminInicio />} />
           <Route path="clubes" element={<AdminClubes />} />
           <Route path="actividades" element={<AdminActividades />} />
+          <Route path="grupos" element={<AdminGrupos />} />
+          <Route path="personal" element={<AdminPersonal />} />
+          <Route path="club-actividad" element={<AdminClubActividad />} />
           <Route path="gestion" element={<AdminGestion />} />
         </Route>
       </Routes>

@@ -15,4 +15,5 @@ export type Club = {
   activo: boolean
   created_at: string
   checkboxes?: ClubCheckbox[]
+  grupo_ids?: string[]
 }
