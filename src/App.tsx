@@ -12,7 +12,6 @@ import AdminPersonal from './pages/admin/Personal'
 import AdminClubActividad from './pages/admin/ClubActividad'
 import AdminSemanas from './pages/admin/Semanas'
 import AdminSemanaDetalle from './pages/admin/SemanaDetalle'
-import AdminGestion from './pages/admin/Gestion'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 function App() {
@@ -42,7 +41,6 @@ function App() {
           <Route path="club-actividad" element={<AdminClubActividad />} />
           <Route path="semanas" element={<AdminSemanas />} />
           <Route path="semanas/:id" element={<AdminSemanaDetalle />} />
-          <Route path="gestion" element={<AdminGestion />} />
         </Route>
       </Routes>
     </BrowserRouter>
