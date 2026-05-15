@@ -17,10 +17,6 @@ type FormState = {
   nombre: string
   descripcion: string
   activo: boolean
-  mostrar_es_socio: boolean
-  es_socio_requerido: boolean
-  mostrar_terminos: boolean
-  terminos_requerido: boolean
   checkboxes: ClubCheckbox[]
 }
 
@@ -28,10 +24,6 @@ const FORM_VACIO: FormState = {
   nombre: '',
   descripcion: '',
   activo: true,
-  mostrar_es_socio: true,
-  es_socio_requerido: false,
-  mostrar_terminos: true,
-  terminos_requerido: true,
   checkboxes: [],
 }
 
@@ -39,9 +31,7 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
   const [form, setForm] = useState<FormState>(FORM_VACIO)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
-  const [pdfFile, setPdfFile] = useState<File | null>(null)
-  const [pdfPreview, setPdfPreview] = useState<string | null>(null)
-  const [mostrarPdf, setMostrarPdf] = useState(false)
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
 
@@ -54,21 +44,14 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
         nombre: club.nombre,
         descripcion: club.descripcion ?? '',
         activo: club.activo,
-        mostrar_es_socio: club.mostrar_es_socio,
-        es_socio_requerido: club.es_socio_requerido,
-        mostrar_terminos: club.mostrar_terminos,
-        terminos_requerido: club.terminos_requerido,
-        checkboxes: club.checkboxes ?? [],
+        checkboxes: (club.checkboxes ?? []).map(cb => ({ ...cb, pdf_file: null })),
       })
       setLogoPreview(club.logo_url)
-      setPdfPreview(club.terminos_pdf_url)
     } else {
       setForm(FORM_VACIO)
       setLogoPreview(null)
-      setPdfPreview(null)
     }
     setLogoFile(null)
-    setPdfFile(null)
     setError('')
   }, [open, club])
 
@@ -88,22 +71,6 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
     setLogoPreview(URL.createObjectURL(file))
   }
 
-  function handlePdfChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.type !== 'application/pdf') {
-      setError('Los términos deben ser un PDF.')
-      return
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setError('El PDF no puede superar 10MB.')
-      return
-    }
-    setError('')
-    setPdfFile(file)
-    setPdfPreview(URL.createObjectURL(file))
-  }
-
   function actualizarCheckbox(i: number, cambios: Partial<ClubCheckbox>) {
     setForm(prev => ({
       ...prev,
@@ -114,7 +81,7 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
   function agregarCheckbox() {
     setForm(prev => ({
       ...prev,
-      checkboxes: [...prev.checkboxes, { etiqueta: '', requerido: false }],
+      checkboxes: [...prev.checkboxes, { etiqueta: '', requerido: false, pdf_url: null, pdf_file: null }],
     }))
   }
 
@@ -123,6 +90,25 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
       ...prev,
       checkboxes: prev.checkboxes.filter((_, idx) => idx !== i),
     }))
+  }
+
+  function handlePdfCheckboxChange(i: number, e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.type !== 'application/pdf') {
+      setError('El archivo adjunto debe ser un PDF.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('El PDF no puede superar 10MB.')
+      return
+    }
+    setError('')
+    actualizarCheckbox(i, { pdf_file: file, pdf_url: URL.createObjectURL(file) })
+  }
+
+  function quitarPdfCheckbox(i: number) {
+    actualizarCheckbox(i, { pdf_file: null, pdf_url: null })
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -135,7 +121,7 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
     }
 
     if (form.checkboxes.some(cb => !cb.etiqueta.trim())) {
-      setError('Todos los checkboxes personalizados deben tener etiqueta.')
+      setError('Todos los checkboxes deben tener etiqueta.')
       return
     }
 
@@ -149,10 +135,25 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
         return
       }
 
+      // Para el JSON enviado al backend, no incluimos pdf_file (es un File, no serializable)
+      // y mandamos pdf_url solo si es una URL existente (http), no blob: previews.
+      const payload = {
+        nombre: form.nombre,
+        descripcion: form.descripcion,
+        activo: form.activo,
+        checkboxes: form.checkboxes.map(cb => ({
+          etiqueta: cb.etiqueta,
+          requerido: cb.requerido,
+          pdf_url: cb.pdf_url && !cb.pdf_url.startsWith('blob:') ? cb.pdf_url : null,
+        })),
+      }
+
       const fd = new FormData()
-      fd.append('data', JSON.stringify(form))
+      fd.append('data', JSON.stringify(payload))
       if (logoFile) fd.append('logo', logoFile)
-      if (pdfFile) fd.append('terminos_pdf', pdfFile)
+      form.checkboxes.forEach((cb, i) => {
+        if (cb.pdf_file) fd.append(`checkbox_pdf_${i}`, cb.pdf_file)
+      })
 
       const url = editando
         ? `${BACKEND}/api/admin/clubes/${club!.id}`
@@ -264,82 +265,15 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
             </section>
 
             <section className="form-seccion">
-              <h3 className="form-seccion-titulo">Configuración del registro</h3>
-
-              <div className="config-grupo">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={form.mostrar_es_socio}
-                    onChange={e => setForm({ ...form, mostrar_es_socio: e.target.checked })}
-                  />
-                  <span>Mostrar "Soy socio del club" (Sí/No)</span>
-                </label>
-                {form.mostrar_es_socio && (
-                  <label className="checkbox-label config-sub">
-                    <input
-                      type="checkbox"
-                      checked={form.es_socio_requerido}
-                      onChange={e => setForm({ ...form, es_socio_requerido: e.target.checked })}
-                    />
-                    <span>Obligatorio responder</span>
-                  </label>
-                )}
-              </div>
-
-              <div className="config-grupo">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={form.mostrar_terminos}
-                    onChange={e => setForm({ ...form, mostrar_terminos: e.target.checked })}
-                  />
-                  <span>Mostrar "Acepto términos y condiciones"</span>
-                </label>
-                {form.mostrar_terminos && (
-                  <label className="checkbox-label config-sub">
-                    <input
-                      type="checkbox"
-                      checked={form.terminos_requerido}
-                      onChange={e => setForm({ ...form, terminos_requerido: e.target.checked })}
-                    />
-                    <span>Obligatorio aceptar</span>
-                  </label>
-                )}
-              </div>
-            </section>
-
-            {form.mostrar_terminos && (
-              <section className="form-seccion">
-                <h3 className="form-seccion-titulo">PDF de términos y condiciones</h3>
-                <div className="form-archivo">
-                  {pdfPreview && (
-                    <button
-                      type="button"
-                      className="form-archivo-pdf"
-                      onClick={() => setMostrarPdf(true)}
-                    >
-                      Ver PDF actual
-                    </button>
-                  )}
-                  <label className="btn btn-secondary btn-sm form-archivo-input">
-                    {pdfPreview ? 'Cambiar PDF' : 'Subir PDF'}
-                    <input type="file" accept="application/pdf" onChange={handlePdfChange} hidden />
-                  </label>
-                </div>
-              </section>
-            )}
-
-            <section className="form-seccion">
               <div className="form-seccion-header">
-                <h3 className="form-seccion-titulo">Checkboxes personalizados</h3>
+                <h3 className="form-seccion-titulo">Checkboxes del registro</h3>
                 <button type="button" className="btn btn-secondary btn-sm" onClick={agregarCheckbox}>
                   + Agregar
                 </button>
               </div>
 
               {form.checkboxes.length === 0 ? (
-                <p className="text-muted form-vacio">Sin checkboxes adicionales.</p>
+                <p className="text-muted form-vacio">Sin checkboxes. Agrega los que necesites para el registro de este club.</p>
               ) : (
                 <div className="checkboxes-editor">
                   {form.checkboxes.map((cb, i) => (
@@ -359,6 +293,34 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
                         />
                         <span>Obligatorio</span>
                       </label>
+                      {cb.pdf_url ? (
+                        <>
+                          <button
+                            type="button"
+                            className="link-button"
+                            onClick={() => setPdfPreviewUrl(cb.pdf_url!)}
+                          >
+                            Ver PDF
+                          </button>
+                          <button
+                            type="button"
+                            className="link-button link-button-danger"
+                            onClick={() => quitarPdfCheckbox(i)}
+                          >
+                            Quitar PDF
+                          </button>
+                        </>
+                      ) : (
+                        <label className="link-button">
+                          + Adjuntar PDF
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            hidden
+                            onChange={e => handlePdfCheckboxChange(i, e)}
+                          />
+                        </label>
+                      )}
                       <button
                         type="button"
                         className="checkbox-editor-eliminar"
@@ -406,12 +368,12 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
         </div>
       </div>
 
-      {pdfPreview && (
+      {pdfPreviewUrl && (
         <PdfViewerModal
-          url={pdfPreview}
-          titulo="Términos y condiciones"
-          open={mostrarPdf}
-          onClose={() => setMostrarPdf(false)}
+          url={pdfPreviewUrl}
+          titulo="PDF del checkbox"
+          open={!!pdfPreviewUrl}
+          onClose={() => setPdfPreviewUrl(null)}
         />
       )}
     </>

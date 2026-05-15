@@ -8,6 +8,7 @@ type ClubCheckbox = {
   etiqueta: string
   requerido: boolean
   orden: number
+  pdf_url: string | null
 }
 
 type Club = {
@@ -15,11 +16,6 @@ type Club = {
   nombre: string
   descripcion: string | null
   logo_url: string | null
-  terminos_pdf_url: string | null
-  mostrar_es_socio: boolean
-  es_socio_requerido: boolean
-  mostrar_terminos: boolean
-  terminos_requerido: boolean
   checkboxes: ClubCheckbox[]
 }
 
@@ -30,8 +26,6 @@ type FormData = {
   cedula: string
   telefono: string
   password: string
-  es_socio: boolean | null
-  acepto_terminos: boolean
 }
 
 const FORM_INICIAL: FormData = {
@@ -41,8 +35,6 @@ const FORM_INICIAL: FormData = {
   cedula: '',
   telefono: '',
   password: '',
-  es_socio: null,
-  acepto_terminos: false,
 }
 
 export default function Registro() {
@@ -52,7 +44,7 @@ export default function Registro() {
   const [clubSeleccionado, setClubSeleccionado] = useState<Club | null>(null)
   const [form, setForm] = useState<FormData>(FORM_INICIAL)
   const [respuestas, setRespuestas] = useState<Record<string, boolean>>({})
-  const [mostrarPdf, setMostrarPdf] = useState(false)
+  const [pdfAbierto, setPdfAbierto] = useState<{ url: string; titulo: string } | null>(null)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
@@ -60,10 +52,8 @@ export default function Registro() {
     supabase
       .from('clubes')
       .select(`
-        id, nombre, descripcion, logo_url, terminos_pdf_url,
-        mostrar_es_socio, es_socio_requerido,
-        mostrar_terminos, terminos_requerido,
-        checkboxes:club_checkboxes(id, etiqueta, requerido, orden)
+        id, nombre, descripcion, logo_url,
+        checkboxes:club_checkboxes(id, etiqueta, requerido, orden, pdf_url)
       `)
       .eq('activo', true)
       .order('nombre')
@@ -91,24 +81,14 @@ export default function Registro() {
   }
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    const { name, value, type, checked } = e.target
-    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
 
     const club = clubSeleccionado!
-
-    if (club.mostrar_es_socio && club.es_socio_requerido && form.es_socio === null) {
-      setError('Debes indicar si eres socio del club.')
-      return
-    }
-
-    if (club.mostrar_terminos && club.terminos_requerido && !form.acepto_terminos) {
-      setError('Debes aceptar los términos y condiciones.')
-      return
-    }
 
     const requeridosNoAceptados = club.checkboxes
       .filter(cb => cb.requerido && respuestas[cb.id] !== true)
@@ -133,8 +113,6 @@ export default function Registro() {
           cedula: form.cedula,
           telefono: form.telefono,
           password: form.password,
-          es_socio: form.es_socio,
-          acepto_terminos: form.acepto_terminos,
           club_id: club.id,
           respuestas: Object.entries(respuestas).map(([checkbox_id, valor]) => ({
             checkbox_id,
@@ -276,71 +254,36 @@ export default function Registro() {
                 />
               </div>
 
-              {clubSeleccionado.mostrar_es_socio && (
-                <div className="sino-group">
-                  <span className="sino-label">
-                    Soy socio del club
-                    {clubSeleccionado.es_socio_requerido && <span className="requerido-mark"> *</span>}
-                  </span>
-                  <div className="sino-options">
-                    <label className={`sino-option ${form.es_socio === true ? 'selected' : ''}`}>
+              {clubSeleccionado.checkboxes.length > 0 && (
+                <div className="checkboxes">
+                  {clubSeleccionado.checkboxes.map(cb => (
+                    <label key={cb.id} className="checkbox-label">
                       <input
-                        type="radio"
-                        name="es_socio_radio"
-                        checked={form.es_socio === true}
-                        onChange={() => setForm(prev => ({ ...prev, es_socio: true }))}
+                        type="checkbox"
+                        checked={respuestas[cb.id] ?? false}
+                        onChange={e => setRespuestas(prev => ({ ...prev, [cb.id]: e.target.checked }))}
                       />
-                      <span>Sí</span>
+                      <span>
+                        {cb.pdf_url ? (
+                          <>
+                            Acepto{' '}
+                            <button
+                              type="button"
+                              className="link-button"
+                              onClick={() => setPdfAbierto({ url: cb.pdf_url!, titulo: cb.etiqueta })}
+                            >
+                              {cb.etiqueta}
+                            </button>
+                          </>
+                        ) : (
+                          cb.etiqueta
+                        )}
+                        {cb.requerido && <span className="requerido-mark"> *</span>}
+                      </span>
                     </label>
-                    <label className={`sino-option ${form.es_socio === false ? 'selected' : ''}`}>
-                      <input
-                        type="radio"
-                        name="es_socio_radio"
-                        checked={form.es_socio === false}
-                        onChange={() => setForm(prev => ({ ...prev, es_socio: false }))}
-                      />
-                      <span>No</span>
-                    </label>
-                  </div>
+                  ))}
                 </div>
               )}
-
-              <div className="checkboxes">
-                {clubSeleccionado.checkboxes.map(cb => (
-                  <label key={cb.id} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={respuestas[cb.id] ?? false}
-                      onChange={e => setRespuestas(prev => ({ ...prev, [cb.id]: e.target.checked }))}
-                    />
-                    <span>{cb.etiqueta}{cb.requerido && <span className="requerido-mark"> *</span>}</span>
-                  </label>
-                ))}
-
-                {clubSeleccionado.mostrar_terminos && (
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox" name="acepto_terminos"
-                      checked={form.acepto_terminos} onChange={handleChange}
-                    />
-                    <span>
-                      Acepto los{' '}
-                      {clubSeleccionado.terminos_pdf_url ? (
-                        <button
-                          type="button"
-                          className="link-button"
-                          onClick={() => setMostrarPdf(true)}
-                        >
-                          términos y condiciones
-                        </button>
-                      ) : (
-                        'términos y condiciones'
-                      )}
-                      {clubSeleccionado.terminos_requerido && <span className="requerido-mark"> *</span>}
-                    </span>
-                  </label>
-                )}
-              </div>
 
               {error && <p className="error-msg">{error}</p>}
 
@@ -356,12 +299,12 @@ export default function Registro() {
         </div>
       )}
 
-      {clubSeleccionado?.terminos_pdf_url && (
+      {pdfAbierto && (
         <PdfViewerModal
-          url={clubSeleccionado.terminos_pdf_url}
-          titulo="Términos y condiciones"
-          open={mostrarPdf}
-          onClose={() => setMostrarPdf(false)}
+          url={pdfAbierto.url}
+          titulo={pdfAbierto.titulo}
+          open={!!pdfAbierto}
+          onClose={() => setPdfAbierto(null)}
         />
       )}
     </div>

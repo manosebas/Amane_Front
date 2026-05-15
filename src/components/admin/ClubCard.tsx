@@ -41,9 +41,8 @@ export function ClubCard({ club, onEditar }: Props) {
         )}
 
         <div className="club-admin-card-meta">
-          {club.terminos_pdf_url && <span>📄 PDF</span>}
           {club.checkboxes && club.checkboxes.length > 0 && (
-            <span>☑ {club.checkboxes.length} extra</span>
+            <span>☑ {club.checkboxes.length} checkbox{club.checkboxes.length === 1 ? '' : 'es'}</span>
           )}
         </div>
       </div>

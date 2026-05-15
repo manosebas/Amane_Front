@@ -11,7 +11,6 @@ export type Perfil = {
   apellido: string
   cedula: string
   telefono: string
-  es_socio: boolean
   club: { id: string; nombre: string } | null
 } | null
 
