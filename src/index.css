@@ -1515,17 +1515,54 @@ body {
   gap: 0.5rem;
   position: relative;
 }
-.nino-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.nino-card .card-edit-btn {
+  top: 0.5rem;
+  right: 0.5rem;
 }
-.nino-card-header h3 {
+.nino-card-titulo {
   margin: 0;
   font-size: 1.05rem;
+  padding-right: 36px;
+  line-height: 1.3;
 }
 
 .link-button-danger {
   color: #991b1b !important;
+}
+
+/* --- Lista de semanas para inscribir --- */
+.semanas-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.7rem;
+  margin: 0.5rem 0;
+}
+.semana-card {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+.semana-card:hover {
+  border-color: var(--color-primary);
+  background: #f8fafc;
+}
+.semana-card-titulo {
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+.semana-card-fechas {
+  font-size: 0.82rem;
+}
+.paso-acciones {
+  margin-bottom: 0.8rem;
 }
 

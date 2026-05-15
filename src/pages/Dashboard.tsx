@@ -5,6 +5,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
 import { NinoFormModal } from '../components/NinoFormModal'
 import { InscripcionesModal } from '../components/InscripcionesModal'
+import { calcularEdad } from '../lib/edad'
 import type { Nino } from '../types/nino'
 
 const BACKEND = (import.meta.env.VITE_BACKEND_URL ?? '').replace(/\/+$/, '')
@@ -99,21 +100,25 @@ export default function Dashboard() {
           <div className="ninos-grid">
             {ninos.map(n => (
               <article key={n.id} className="nino-card">
-                <header className="nino-card-header">
-                  <h3>{n.nombre} {n.apellido}</h3>
-                  <button
-                    type="button"
-                    className="card-edit-btn"
-                    onClick={() => { setEditandoNino(n); setModalNinoAbierto(true) }}
-                    aria-label="Editar"
-                    title="Editar"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                  </button>
-                </header>
+                <button
+                  type="button"
+                  className="card-edit-btn"
+                  onClick={() => { setEditandoNino(n); setModalNinoAbierto(true) }}
+                  aria-label="Editar"
+                  title="Editar"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+                <h3 className="nino-card-titulo">
+                  {n.nombre} {n.apellido}
+                  {(() => {
+                    const edad = calcularEdad(n.fecha_nacimiento)
+                    return edad !== null ? <span className="text-muted"> ({edad} años)</span> : null
+                  })()}
+                </h3>
                 <p className="text-muted">
                   Fecha de nacimiento: {n.fecha_nacimiento}
                 </p>

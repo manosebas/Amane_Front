@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { api } from '../lib/api'
 import type { Nino } from '../types/nino'
+import type { Semana } from '../types/semana'
 import type { SlotPadre } from '../types/slot'
 import { DIAS, DIAS_LABEL } from '../types/slot'
 
@@ -15,35 +16,62 @@ type Props = {
 }
 
 export function InscripcionesModal({ nino, open, onClose, onCambio }: Props) {
+  const [semanas, setSemanas] = useState<Semana[]>([])
+  const [semanaSel, setSemanaSel] = useState<Semana | null>(null)
   const [slots, setSlots] = useState<SlotPadre[]>([])
-  const [cargando, setCargando] = useState(false)
+  const [cargandoSemanas, setCargandoSemanas] = useState(false)
+  const [cargandoSlots, setCargandoSlots] = useState(false)
   const [error, setError] = useState('')
   const [accionando, setAccionando] = useState<string | null>(null)
-  const [hayActiva, setHayActiva] = useState(true)
 
-  const cargar = useCallback(async () => {
-    if (!nino) return
-    setCargando(true); setError('')
+  const cargarSemanas = useCallback(async () => {
+    setCargandoSemanas(true); setError('')
     try {
-      const res = await api(`/api/inscripciones/slots-disponibles/${nino.id}`)
+      const res = await api('/api/inscripciones/semanas-activas')
       const data = await res.json().catch(() => null)
-      if (!res.ok) setError(data?.error ?? 'Error al cargar slots.')
-      else {
-        setSlots(data?.slots ?? [])
-        setHayActiva(!!data?.semana_id)
-      }
+      if (!res.ok) setError(data?.error ?? 'Error al cargar semanas.')
+      else setSemanas(data?.semanas ?? [])
     } catch {
       setError('Error de conexión.')
     }
-    setCargando(false)
+    setCargandoSemanas(false)
+  }, [])
+
+  const cargarSlots = useCallback(async (semanaId: string) => {
+    if (!nino) return
+    setCargandoSlots(true); setError('')
+    try {
+      const res = await api(`/api/inscripciones/slots-disponibles/${nino.id}?semana_id=${semanaId}`)
+      const data = await res.json().catch(() => null)
+      if (!res.ok) setError(data?.error ?? 'Error al cargar slots.')
+      else setSlots(data?.slots ?? [])
+    } catch {
+      setError('Error de conexión.')
+    }
+    setCargandoSlots(false)
   }, [nino])
 
   useEffect(() => {
-    if (open && nino) cargar()
-  }, [open, nino, cargar])
+    if (open && nino) {
+      setSemanaSel(null)
+      setSlots([])
+      cargarSemanas()
+    }
+  }, [open, nino, cargarSemanas])
+
+  function elegirSemana(s: Semana) {
+    setSemanaSel(s)
+    cargarSlots(s.id)
+  }
+
+  function volverASemanas() {
+    setSemanaSel(null)
+    setSlots([])
+    setError('')
+  }
 
   async function toggleSlot(s: SlotPadre) {
-    if (!nino) return
+    if (!nino || !semanaSel) return
     setAccionando(s.id)
     setError('')
     try {
@@ -71,7 +99,7 @@ export function InscripcionesModal({ nino, open, onClose, onCambio }: Props) {
           setError(data?.error ?? 'Error al inscribir.')
         }
       }
-      await cargar()
+      await cargarSlots(semanaSel.id)
       onCambio()
     } catch {
       setError('Error de conexión.')
@@ -90,56 +118,91 @@ export function InscripcionesModal({ nino, open, onClose, onCambio }: Props) {
             <p className="text-muted">
               {nino.nombre} {nino.apellido}
               {nino.grupo && <> · grupo <strong>{nino.grupo.nombre}</strong></>}
+              {semanaSel && (
+                <> · semana <strong>{semanaSel.nombre || `${semanaSel.fecha_inicio} → ${semanaSel.fecha_fin}`}</strong></>
+              )}
             </p>
           </div>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
-        {cargando ? (
-          <p className="text-muted">Cargando slots...</p>
-        ) : !hayActiva ? (
-          <p className="text-muted">No hay semana activa en este momento.</p>
-        ) : slots.length === 0 ? (
-          <p className="text-muted">No hay slots disponibles para el grupo de este niño.</p>
-        ) : (
-          <div className="semana-calendario">
-            {DIAS.map(d => {
-              const slotsDia = slots.filter(s => s.dia === d).sort((a, b) =>
-                a.hora_inicio.localeCompare(b.hora_inicio)
-              )
-              if (slotsDia.length === 0) return null
-              return (
-                <div key={d} className="semana-dia">
-                  <header className="semana-dia-header"><h3>{DIAS_LABEL[d]}</h3></header>
-                  <div className="semana-dia-slots">
-                    {slotsDia.map(s => {
-                      const lleno = s.inscritos >= s.cupo && !s.inscripcion_id
-                      const inscrito = !!s.inscripcion_id
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          className={`slot-card slot-padre ${inscrito ? 'slot-inscrito' : ''} ${lleno ? 'slot-lleno' : ''}`}
-                          onClick={() => !lleno && !accionando && toggleSlot(s)}
-                          disabled={lleno || accionando === s.id}
-                        >
-                          <div className="slot-card-hora">{s.hora_inicio.slice(0,5)} – {s.hora_fin.slice(0,5)}</div>
-                          <div className="slot-card-act">{s.actividad?.nombre ?? '—'}</div>
-                          <div className="slot-card-meta">
-                            <span>{s.inscritos}/{s.cupo}</span>
-                            {s.personal && <span>· {s.personal.nombre} {s.personal.apellido}</span>}
-                          </div>
-                          <div className="slot-card-estado">
-                            {inscrito ? '✓ Inscrito' : lleno ? 'Sin cupo' : 'Inscribir'}
-                          </div>
-                        </button>
-                      )
-                    })}
+        {!semanaSel ? (
+          // Paso 1: elegir semana
+          cargandoSemanas ? (
+            <p className="text-muted">Cargando semanas...</p>
+          ) : semanas.length === 0 ? (
+            <p className="text-muted">No hay semanas activas en este momento.</p>
+          ) : (
+            <div className="semanas-lista">
+              {semanas.map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="semana-card"
+                  onClick={() => elegirSemana(s)}
+                >
+                  <div className="semana-card-titulo">{s.nombre || 'Sin nombre'}</div>
+                  <div className="semana-card-fechas text-muted">
+                    {s.fecha_inicio} → {s.fecha_fin}
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                </button>
+              ))}
+            </div>
+          )
+        ) : (
+          // Paso 2: slots de la semana
+          <>
+            <div className="paso-acciones">
+              <button type="button" className="btn btn-secondary btn-sm" onClick={volverASemanas}>
+                ← Volver a semanas
+              </button>
+            </div>
+
+            {cargandoSlots ? (
+              <p className="text-muted">Cargando slots...</p>
+            ) : slots.length === 0 ? (
+              <p className="text-muted">No hay slots disponibles para el grupo de este niño en esta semana.</p>
+            ) : (
+              <div className="semana-calendario">
+                {DIAS.map(d => {
+                  const slotsDia = slots.filter(s => s.dia === d).sort((a, b) =>
+                    a.hora_inicio.localeCompare(b.hora_inicio)
+                  )
+                  if (slotsDia.length === 0) return null
+                  return (
+                    <div key={d} className="semana-dia">
+                      <header className="semana-dia-header"><h3>{DIAS_LABEL[d]}</h3></header>
+                      <div className="semana-dia-slots">
+                        {slotsDia.map(s => {
+                          const lleno = s.inscritos >= s.cupo && !s.inscripcion_id
+                          const inscrito = !!s.inscripcion_id
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              className={`slot-card slot-padre ${inscrito ? 'slot-inscrito' : ''} ${lleno ? 'slot-lleno' : ''}`}
+                              onClick={() => !lleno && !accionando && toggleSlot(s)}
+                              disabled={lleno || accionando === s.id}
+                            >
+                              <div className="slot-card-hora">{s.hora_inicio.slice(0,5)} – {s.hora_fin.slice(0,5)}</div>
+                              <div className="slot-card-act">{s.actividad?.nombre ?? '—'}</div>
+                              <div className="slot-card-meta">
+                                <span>{s.inscritos}/{s.cupo}</span>
+                                {s.personal && <span>· {s.personal.nombre} {s.personal.apellido}</span>}
+                              </div>
+                              <div className="slot-card-estado">
+                                {inscrito ? '✓ Inscrito' : lleno ? 'Sin cupo' : 'Inscribir'}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
 
         {error && <p className="error-msg">{error}</p>}
