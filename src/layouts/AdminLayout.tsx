@@ -99,12 +99,12 @@ const ITEMS_TOP = [
   { to: '/admin/grupos', label: 'Grupos', icon: IconMountain },
   { to: '/admin/clubes', label: 'Clubes', icon: IconBuilding },
   { to: '/admin/actividades', label: 'Actividades', icon: IconPalette },
+  { to: '/admin/club-actividad', label: 'Club-Actividad', icon: IconLink },
 ]
 const ITEMS_MID = [
   { to: '/admin/personal', label: 'Personal', icon: IconIdCard },
 ]
 const ITEMS_BOT = [
-  { to: '/admin/club-actividad', label: 'Club-Actividad', icon: IconLink },
   { to: '/admin/semanas', label: 'Semanas', icon: IconCalendar },
 ]
 
