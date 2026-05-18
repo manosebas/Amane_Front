@@ -4,6 +4,7 @@ import { api } from '../../lib/api'
 import { PdfViewerModal } from '../PdfViewerModal'
 import type { Club, ClubCheckbox } from '../../types/club'
 import type { Grupo } from '../../types/grupo'
+import type { Categoria } from '../../types/actividad'
 
 const BACKEND = (import.meta.env.VITE_BACKEND_URL ?? '').replace(/\/+$/, '')
 
@@ -21,6 +22,7 @@ type FormState = {
   activo: boolean
   checkboxes: ClubCheckbox[]
   grupo_ids: string[]
+  minimos: Record<string, number>
 }
 
 const FORM_VACIO: FormState = {
@@ -29,11 +31,13 @@ const FORM_VACIO: FormState = {
   activo: true,
   checkboxes: [],
   grupo_ids: [],
+  minimos: {},
 }
 
 export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: Props) {
   const [form, setForm] = useState<FormState>(FORM_VACIO)
   const [grupos, setGrupos] = useState<Grupo[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
@@ -45,12 +49,17 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
   useEffect(() => {
     if (!open) return
     if (club) {
+      const minimosMap: Record<string, number> = {}
+      for (const m of club.minimos_categoria ?? []) {
+        minimosMap[m.categoria_id] = m.cantidad
+      }
       setForm({
         nombre: club.nombre,
         descripcion: club.descripcion ?? '',
         activo: club.activo,
         checkboxes: (club.checkboxes ?? []).map(cb => ({ ...cb, pdf_file: null })),
         grupo_ids: club.grupo_ids ?? [],
+        minimos: minimosMap,
       })
       setLogoPreview(club.logo_url)
     } else {
@@ -71,7 +80,17 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
         }
       }
     })
+
+    api('/api/admin/categorias').then(async res => {
+      const data = await res.json().catch(() => null)
+      if (res.ok) setCategorias((data?.categorias ?? []) as Categoria[])
+    })
   }, [open, club])
+
+  function actualizarMinimo(categoriaId: string, valor: string) {
+    const n = Math.max(0, Math.floor(Number(valor) || 0))
+    setForm(prev => ({ ...prev, minimos: { ...prev.minimos, [categoriaId]: n } }))
+  }
 
   function toggleGrupo(id: string) {
     setForm(prev => ({
@@ -174,6 +193,9 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
           pdf_url: cb.pdf_url && !cb.pdf_url.startsWith('blob:') ? cb.pdf_url : null,
         })),
         grupo_ids: form.grupo_ids,
+        minimos_categoria: Object.entries(form.minimos)
+          .filter(([, n]) => n > 0)
+          .map(([categoria_id, cantidad]) => ({ categoria_id, cantidad })),
       }
 
       const fd = new FormData()
@@ -309,6 +331,35 @@ export function ClubFormModal({ club, open, onClose, onGuardado, onEliminar }: P
                       />
                       <span>{g.nombre} <span className="text-muted">({g.edad_min}–{g.edad_max} años)</span></span>
                     </label>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="form-seccion">
+              <h3 className="form-seccion-titulo">Actividades obligatorias semanales por niño</h3>
+              <p className="text-muted form-seccion-ayuda">
+                Cantidad de actividades de cada categoría que cada niño debe inscribir por semana.
+                Si no configuras al menos una categoría con cantidad &gt; 0, no podrás activar semanas de este club.
+              </p>
+              {categorias.length === 0 ? (
+                <p className="text-muted form-vacio">
+                  No hay categorías creadas. Ve al módulo de Actividades para crearlas.
+                </p>
+              ) : (
+                <div className="minimos-editor">
+                  {categorias.map(cat => (
+                    <div key={cat.id} className="minimo-fila">
+                      <span className="minimo-nombre">{cat.nombre}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={form.minimos[cat.id] ?? 0}
+                        onChange={e => actualizarMinimo(cat.id, e.target.value)}
+                        className="minimo-input"
+                      />
+                    </div>
                   ))}
                 </div>
               )}

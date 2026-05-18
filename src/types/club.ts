@@ -7,6 +7,11 @@ export type ClubCheckbox = {
   pdf_file?: File | null
 }
 
+export type ClubMinimoCategoria = {
+  categoria_id: string
+  cantidad: number
+}
+
 export type Club = {
   id: string
   nombre: string
@@ -16,4 +21,5 @@ export type Club = {
   created_at: string
   checkboxes?: ClubCheckbox[]
   grupo_ids?: string[]
+  minimos_categoria?: ClubMinimoCategoria[]
 }

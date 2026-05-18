@@ -18,8 +18,18 @@ export type Clase = {
 export type ActividadDisponible = {
   clase_id: string
   clase_grupo_id: string
-  actividad: { id: string; nombre: string } | null
+  actividad: {
+    id: string
+    nombre: string
+    categoria?: { id: string; nombre: string } | null
+  } | null
   cupo: number
   inscritos: number
   inscripcion_id: string | null
+}
+
+export type MinimoDisponible = {
+  categoria_id: string
+  categoria_nombre: string
+  cantidad: number
 }
