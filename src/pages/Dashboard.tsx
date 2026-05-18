@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
 
+  const [cerrandoSesion, setCerrandoSesion] = useState(false)
   const [modalNinoAbierto, setModalNinoAbierto] = useState(false)
   const [editandoNino, setEditandoNino] = useState<Nino | null>(null)
   const [eliminandoNino, setEliminandoNino] = useState<Nino | null>(null)
@@ -41,6 +42,7 @@ export default function Dashboard() {
   useEffect(() => { cargar() }, [cargar])
 
   async function handleSignOut() {
+    setCerrandoSesion(true)
     await signOut()
     navigate('/')
   }
@@ -68,7 +70,9 @@ export default function Dashboard() {
         <span className="nav-logo">Amané</span>
         <div className="nav-actions">
           <span className="nav-email">{user?.email}</span>
-          <button className="btn btn-secondary" onClick={handleSignOut}>Cerrar sesión</button>
+          <button className="btn btn-secondary" onClick={handleSignOut} disabled={cerrandoSesion}>
+            {cerrandoSesion ? 'Cerrando sesión...' : 'Cerrar sesión'}
+          </button>
         </div>
       </nav>
 

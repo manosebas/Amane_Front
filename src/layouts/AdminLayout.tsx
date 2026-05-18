@@ -114,12 +114,14 @@ export default function AdminLayout() {
   const [colapsado, setColapsado] = useState(() => {
     return localStorage.getItem('admin-sidebar-colapsado') === '1'
   })
+  const [cerrandoSesion, setCerrandoSesion] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('admin-sidebar-colapsado', colapsado ? '1' : '0')
   }, [colapsado])
 
   async function handleSignOut() {
+    setCerrandoSesion(true)
     await signOut()
     navigate('/')
   }
@@ -169,9 +171,10 @@ export default function AdminLayout() {
           <button
             className="btn btn-secondary btn-block admin-signout"
             onClick={handleSignOut}
-            title={colapsado ? 'Cerrar sesión' : undefined}
+            disabled={cerrandoSesion}
+            title={colapsado ? (cerrandoSesion ? 'Cerrando sesión...' : 'Cerrar sesión') : undefined}
           >
-            {colapsado ? '⎋' : 'Cerrar sesión'}
+            {colapsado ? (cerrandoSesion ? '…' : '⎋') : (cerrandoSesion ? 'Cerrando sesión...' : 'Cerrar sesión')}
           </button>
         </div>
       </aside>

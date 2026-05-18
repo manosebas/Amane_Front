@@ -60,7 +60,9 @@ export function useAuth() {
     }
   }, [])
 
-  const signOut = () => supabase.auth.signOut()
+  // scope: 'local' borra solo el token local sin esperar la invalidacion remota,
+  // que en redes lentas tarda varios segundos.
+  const signOut = () => supabase.auth.signOut({ scope: 'local' })
 
   return { user, session, perfil, rol, loading, signOut }
 }
