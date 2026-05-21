@@ -24,6 +24,14 @@ export default function Semanas() {
   const [eliminando, setEliminando] = useState<Semana | null>(null)
   const [errorEliminar, setErrorEliminar] = useState('')
 
+  type Toast = { id: number; msg: string; tipo: 'error' | 'warning' | 'success' }
+  const [toasts, setToasts] = useState<Toast[]>([])
+  function mostrarToast(msg: string, tipo: Toast['tipo'] = 'error') {
+    const id = Date.now() + Math.random()
+    setToasts(t => [...t, { id, msg, tipo }])
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 6000)
+  }
+
   const cargarClubes = useCallback(async () => {
     setError('')
     try {
@@ -67,9 +75,16 @@ export default function Semanas() {
         },
         body: JSON.stringify({ estado: nuevo }),
       })
-      if (res.ok) cargarSemanas(clubId)
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        mostrarToast(data?.error ?? 'No se pudo cambiar el estado de la semana.', 'error')
+        return
+      }
+      if (data?.warning) mostrarToast(data.warning, 'warning')
+      else if (nuevo === 'activa') mostrarToast('Semana activada.', 'success')
+      cargarSemanas(clubId)
     } catch {
-      // ignore
+      mostrarToast('Error de conexión.', 'error')
     }
   }
 
@@ -155,7 +170,7 @@ export default function Semanas() {
                         </button>
                       ) : (
                         <button className="btn btn-secondary btn-sm" onClick={() => cambiarEstado(s, 'borrador')}>
-                          Pasar a borrador
+                          Inactivar
                         </button>
                       )}
                       <button className="btn btn-secondary btn-sm" onClick={() => abrirModal('editar', s)}>
@@ -184,6 +199,14 @@ export default function Semanas() {
         onClose={() => setModalAbierto(false)}
         onGuardado={() => { setModalAbierto(false); cargarSemanas(clubId) }}
       />
+
+      {toasts.length > 0 && (
+        <div className="toast-stack" role="status" aria-live="polite">
+          {toasts.map(t => (
+            <div key={t.id} className={`toast toast-${t.tipo}`}>{t.msg}</div>
+          ))}
+        </div>
+      )}
 
       {eliminando && (
         <div
