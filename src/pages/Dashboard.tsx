@@ -5,6 +5,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
 import { NinoFormModal } from '../components/NinoFormModal'
 import { InscripcionesModal } from '../components/InscripcionesModal'
+import { NinoResumen } from '../components/NinoResumen'
 import { calcularEdad } from '../lib/edad'
 import type { Nino } from '../types/nino'
 
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [errorEliminar, setErrorEliminar] = useState('')
 
   const [inscripcionesNino, setInscripcionesNino] = useState<Nino | null>(null)
+  const [resumenKey, setResumenKey] = useState(0)
 
   const cargar = useCallback(async () => {
     setCargando(true); setError('')
@@ -103,7 +105,8 @@ export default function Dashboard() {
         ) : (
           <div className="ninos-grid">
             {ninos.map(n => (
-              <article key={n.id} className="nino-card">
+              <div key={n.id} className="nino-wrapper">
+              <article className="nino-card">
                 <button
                   type="button"
                   className="card-edit-btn"
@@ -138,6 +141,8 @@ export default function Dashboard() {
                   Ver inscripciones
                 </button>
               </article>
+              <NinoResumen ninoId={n.id} refreshKey={resumenKey} />
+              </div>
             ))}
           </div>
         )}
@@ -155,7 +160,7 @@ export default function Dashboard() {
         nino={inscripcionesNino}
         open={!!inscripcionesNino}
         onClose={() => setInscripcionesNino(null)}
-        onCambio={cargar}
+        onCambio={() => { cargar(); setResumenKey(k => k + 1) }}
       />
 
       {eliminandoNino && (

@@ -1580,6 +1580,70 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 0.9rem;
 }
+.nino-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.nino-resumen {
+  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.nino-resumen-titulo {
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-muted);
+}
+.resumen-semana {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.resumen-semana-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.resumen-semana-nombre {
+  font-weight: 600;
+}
+.resumen-semana-fechas {
+  font-size: 0.78rem;
+}
+.resumen-categoria {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.resumen-categoria-nombre {
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--color-primary);
+}
+.resumen-actividades {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.resumen-actividades li {
+  font-size: 0.86rem;
+}
 .nino-card {
   background: white;
   border: 1px solid var(--color-border);
