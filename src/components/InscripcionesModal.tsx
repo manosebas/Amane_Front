@@ -95,8 +95,15 @@ export function InscripcionesModal({ nino, open, onClose, onCambio }: Props) {
 
   function toggleActividad(a: ActividadDisponible) {
     if (guardando) return
-    const lleno = a.inscritos >= a.cupo && !a.inscripcion_id
-    if (lleno || llenasIds.has(a.clase_grupo_id)) return
+    const yaSel = seleccion.has(a.clase_grupo_id)
+    if (!yaSel) {
+      const lleno = a.inscritos >= a.cupo
+      if (lleno || llenasIds.has(a.clase_grupo_id)) return
+      const catId = a.actividad?.categoria?.id ?? SIN_CATEGORIA
+      const minimo = minimos.find(m => m.categoria_id === catId)
+      const actual = conteoPorCategoria.get(catId) ?? 0
+      if (minimo && actual >= minimo.cantidad) return
+    }
     setSeleccion(prev => {
       const next = new Set(prev)
       if (next.has(a.clase_grupo_id)) next.delete(a.clase_grupo_id)
@@ -136,16 +143,15 @@ export function InscripcionesModal({ nino, open, onClose, onCambio }: Props) {
     return m
   }, [actividades, seleccion])
 
-  // Validación: cada categoría con mínimo debe cumplirse exactamente
+  // Validación: cada categoría con mínimo debe cumplirse exactamente.
+  // Como la UI bloquea seleccionar más del mínimo, aquí solo medimos faltantes.
   const validacion = useMemo(() => {
     const faltantes: string[] = []
-    const exceso: string[] = []
     for (const m of minimos) {
       const actual = conteoPorCategoria.get(m.categoria_id) ?? 0
       if (actual < m.cantidad) faltantes.push(`${m.categoria_nombre}: ${actual}/${m.cantidad}`)
-      else if (actual > m.cantidad) exceso.push(`${m.categoria_nombre}: ${actual}/${m.cantidad}`)
     }
-    return { faltantes, exceso, ok: faltantes.length === 0 && exceso.length === 0 }
+    return { faltantes, ok: faltantes.length === 0 }
   }, [minimos, conteoPorCategoria])
 
   async function confirmarInscripcion() {
@@ -260,6 +266,7 @@ export function InscripcionesModal({ nino, open, onClose, onCambio }: Props) {
                   const sel = conteoPorCategoria.get(g.key) ?? 0
                   const requerido = minimo?.cantidad ?? 0
                   const cumplida = requerido > 0 ? sel === requerido : true
+                  const categoriaLlena = requerido > 0 && sel >= requerido
                   return (
                     <section key={g.key} className="categoria-bloque">
                       <header className="categoria-header">
@@ -275,18 +282,22 @@ export function InscripcionesModal({ nino, open, onClose, onCambio }: Props) {
                           const seleccionada = seleccion.has(a.clase_grupo_id)
                           const lleno = a.inscritos >= a.cupo && !seleccionada
                           const recienLlena = llenasIds.has(a.clase_grupo_id)
+                          const bloqueadaPorMax = categoriaLlena && !seleccionada
+                          const cupoRestante = Math.max(0, a.cupo - a.inscritos)
+                          const deshabilitada = lleno || recienLlena || bloqueadaPorMax
                           return (
                             <button
                               key={a.clase_grupo_id}
                               type="button"
-                              className={`actividad-mini ${seleccionada ? 'sel' : ''} ${lleno || recienLlena ? 'llena' : ''}`}
+                              className={`actividad-mini${seleccionada ? ' sel' : ''}${lleno || recienLlena ? ' llena' : ''}${bloqueadaPorMax ? ' bloqueada' : ''}`}
                               onClick={() => toggleActividad(a)}
-                              disabled={(lleno || recienLlena) && !seleccionada}
+                              disabled={deshabilitada}
                               aria-pressed={seleccionada}
+                              title={bloqueadaPorMax ? `Ya seleccionaste el máximo de ${g.nombre}` : undefined}
                             >
                               <span className="actividad-mini-nombre">{a.actividad?.nombre ?? '—'}</span>
                               <span className="actividad-mini-cupo">
-                                {a.inscritos} / {a.cupo}
+                                Cupos disponibles: {cupoRestante}
                                 {recienLlena && <span className="actividad-mini-llena"> · sin cupo</span>}
                               </span>
                             </button>
@@ -307,11 +318,6 @@ export function InscripcionesModal({ nino, open, onClose, onCambio }: Props) {
                   {validacion.faltantes.length > 0 && (
                     <p className="text-muted">
                       Faltan: {validacion.faltantes.join(' · ')}
-                    </p>
-                  )}
-                  {validacion.exceso.length > 0 && (
-                    <p className="text-muted">
-                      Excede el máximo: {validacion.exceso.join(' · ')}
                     </p>
                   )}
                 </div>

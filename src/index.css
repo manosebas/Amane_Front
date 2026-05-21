@@ -1826,6 +1826,11 @@ body {
   opacity: 0.55;
   cursor: not-allowed;
 }
+.actividad-mini.bloqueada {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
 .actividad-mini:disabled {
   cursor: not-allowed;
 }
