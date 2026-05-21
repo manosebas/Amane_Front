@@ -10,6 +10,33 @@ const BACKEND = (import.meta.env.VITE_BACKEND_URL ?? '').replace(/\/+$/, '')
 
 type Modo = 'crear' | 'editar' | 'clonar'
 
+const SVG_PROPS = {
+  width: 16,
+  height: 16,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+  'aria-hidden': true,
+}
+const IconPlay = () => (
+  <svg {...SVG_PROPS}><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none" /></svg>
+)
+const IconPause = () => (
+  <svg {...SVG_PROPS}><rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none" /><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none" /></svg>
+)
+const IconPencil = () => (
+  <svg {...SVG_PROPS}><path d="M4 20h4l10-10-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>
+)
+const IconCopy = () => (
+  <svg {...SVG_PROPS}><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h9" /></svg>
+)
+const IconTrash = () => (
+  <svg {...SVG_PROPS}><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
+)
+
 export default function Semanas() {
   const [clubes, setClubes] = useState<Club[]>([])
   const [clubId, setClubId] = useState<string>('')
@@ -159,28 +186,59 @@ export default function Semanas() {
                     </td>
                     <td>{s.fecha_inicio} → {s.fecha_fin}</td>
                     <td>
-                      <span className={`badge badge-${s.estado === 'activa' ? 'activo' : 'inactivo'}`}>
-                        {s.estado}
+                      <span className={`estado-pill estado-${s.estado === 'activa' ? 'activa' : 'borrador'}`}>
+                        <span className="estado-dot" aria-hidden="true" />
+                        {s.estado === 'activa' ? 'Activa' : 'Borrador'}
                       </span>
                     </td>
                     <td className="acciones-cell">
                       {s.estado === 'borrador' ? (
-                        <button className="btn btn-primary btn-sm" onClick={() => cambiarEstado(s, 'activa')}>
-                          Activar
+                        <button
+                          type="button"
+                          className="btn-icon btn-icon-success"
+                          onClick={() => cambiarEstado(s, 'activa')}
+                          title="Activar"
+                          aria-label="Activar"
+                        >
+                          <IconPlay />
                         </button>
                       ) : (
-                        <button className="btn btn-secondary btn-sm" onClick={() => cambiarEstado(s, 'borrador')}>
-                          Inactivar
+                        <button
+                          type="button"
+                          className="btn-icon btn-icon-warning"
+                          onClick={() => cambiarEstado(s, 'borrador')}
+                          title="Inactivar"
+                          aria-label="Inactivar"
+                        >
+                          <IconPause />
                         </button>
                       )}
-                      <button className="btn btn-secondary btn-sm" onClick={() => abrirModal('editar', s)}>
-                        Editar
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        onClick={() => abrirModal('editar', s)}
+                        title="Editar"
+                        aria-label="Editar"
+                      >
+                        <IconPencil />
                       </button>
-                      <button className="btn btn-secondary btn-sm" onClick={() => abrirModal('clonar', s)}>
-                        Clonar
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        onClick={() => abrirModal('clonar', s)}
+                        title="Clonar"
+                        aria-label="Clonar"
+                      >
+                        <IconCopy />
                       </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => setEliminando(s)}>
-                        Eliminar
+                      <button
+                        type="button"
+                        className="btn-icon btn-icon-danger"
+                        onClick={() => setEliminando(s)}
+                        title="Eliminar"
+                        aria-label="Eliminar"
+                      >
+                        <IconTrash />
                       </button>
                     </td>
                   </tr>
