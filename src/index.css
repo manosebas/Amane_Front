@@ -2141,6 +2141,139 @@ body {
   font-size: 0.92rem;
   min-width: 220px;
 }
+.inicio-filtros .bloques-input {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.92rem;
+  width: 90px;
+}
+
+/* Horario */
+.horario-acciones {
+  display: flex;
+  gap: 0.5rem;
+}
+.horario-resumen {
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+.horario-resumen.sin-cruces {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.horario-resumen.con-cruces {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+.horario-grupo {
+  margin-bottom: 1.75rem;
+}
+.horario-grupo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+.horario-grupo-estado {
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+.horario-grupo-estado.ok { background: #ecfdf5; color: #047857; }
+.horario-grupo-estado.mal { background: #fef2f2; color: #b91c1c; }
+
+.horario-tablero {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+.horario-col {
+  flex: 1 0 160px;
+  min-width: 160px;
+  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+}
+.horario-col.sin-asignar {
+  background: #fff;
+  border-style: dashed;
+}
+.horario-col-titulo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-muted);
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.horario-col-body {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 60px;
+}
+.horario-col-vacio {
+  color: var(--color-text-muted);
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
+}
+.horario-chip {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.horario-chip.conflicto {
+  border-color: #fecaca;
+  border-left-color: var(--color-error);
+  background: #fef2f2;
+}
+.horario-chip-nombre {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.horario-chip-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.76rem;
+}
+.horario-chip-cat {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.horario-chip-select {
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.82rem;
+}
 
 .ocupacion-section { margin-top: 1rem; }
 .ocupacion-header {
