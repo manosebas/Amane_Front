@@ -3,12 +3,12 @@ import { api } from '../../lib/api'
 import type { Club } from '../../types/club'
 import type { Semana } from '../../types/semana'
 
-type Stats = {
-  clubes: number
-  actividades: number
-  semanas_activas: number
-  ninos: number
-  inscripciones: number
+type Resumen = {
+  inscritos: number
+  cupos: number
+  disponibles: number
+  actividad_favorita: { nombre: string; inscritos: number } | null
+  ninos_registrados: number
 }
 
 type GrupoOcup = {
@@ -31,28 +31,15 @@ type ActividadOcup = {
 }
 
 export default function Inicio() {
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [cargandoStats, setCargandoStats] = useState(true)
-
   const [clubes, setClubes] = useState<Club[]>([])
   const [clubId, setClubId] = useState<string>('')
   const [semanas, setSemanas] = useState<Semana[]>([])
   const [semanaId, setSemanaId] = useState<string>('')
 
+  const [resumen, setResumen] = useState<Resumen | null>(null)
   const [ocupacion, setOcupacion] = useState<ActividadOcup[]>([])
   const [cargandoOcup, setCargandoOcup] = useState(false)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api('/api/admin/dashboard/stats')
-        const data = await res.json().catch(() => null)
-        if (res.ok) setStats(data)
-      } catch { /* ignore */ }
-      setCargandoStats(false)
-    })()
-  }, [])
 
   useEffect(() => {
     (async () => {
@@ -86,13 +73,18 @@ export default function Inicio() {
   useEffect(() => { if (clubId) cargarSemanas(clubId) }, [clubId, cargarSemanas])
 
   const cargarOcupacion = useCallback(async (sid: string) => {
-    if (!sid) { setOcupacion([]); return }
+    if (!sid) { setOcupacion([]); setResumen(null); return }
     setCargandoOcup(true); setError('')
     try {
       const res = await api(`/api/admin/dashboard/ocupacion?semana_id=${sid}`)
       const data = await res.json().catch(() => null)
-      if (!res.ok) setError(data?.error ?? 'Error al cargar ocupación.')
-      else setOcupacion(data?.actividades ?? [])
+      if (!res.ok) {
+        setError(data?.error ?? 'Error al cargar ocupación.')
+        setOcupacion([]); setResumen(null)
+      } else {
+        setOcupacion(data?.actividades ?? [])
+        setResumen(data?.resumen ?? null)
+      }
     } catch {
       setError('Error de conexión.')
     }
@@ -114,75 +106,72 @@ export default function Inicio() {
     a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
   )
 
-  const totalSemana = ocupacion.reduce(
-    (acc, a) => ({
-      cupo: acc.cupo + a.total.cupo,
-      inscritos: acc.inscritos + a.total.inscritos,
-      disponibles: acc.disponibles + a.total.disponibles,
-    }),
-    { cupo: 0, inscritos: 0, disponibles: 0 }
-  )
-
   return (
     <div>
       <h1 className="admin-page-titulo">Inicio</h1>
-      <p className="text-muted">Resumen rápido de Amané.</p>
 
-      <div className="kpi-grid">
-        <KpiCard label="Clubes" value={stats?.clubes} cargando={cargandoStats} />
-        <KpiCard label="Actividades" value={stats?.actividades} cargando={cargandoStats} />
-        <KpiCard label="Semanas activas" value={stats?.semanas_activas} cargando={cargandoStats} />
-        <KpiCard label="Niños registrados" value={stats?.ninos} cargando={cargandoStats} />
-        <KpiCard label="Inscripciones" value={stats?.inscripciones} cargando={cargandoStats} />
+      <div className="inicio-filtros">
+        <label>
+          Club
+          <select value={clubId} onChange={e => setClubId(e.target.value)} disabled={clubes.length === 0}>
+            {clubes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          </select>
+        </label>
+        <label>
+          Semana
+          <select value={semanaId} onChange={e => setSemanaId(e.target.value)} disabled={semanas.length === 0}>
+            {semanas.length === 0 && <option value="">Sin semanas</option>}
+            {semanas.map(s => (
+              <option key={s.id} value={s.id}>
+                {(s.nombre || `${s.fecha_inicio} → ${s.fecha_fin}`)}{s.estado !== 'activa' ? ' · borrador' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      <section className="ocupacion-section">
-        <header className="ocupacion-header">
-          <h2 className="admin-section-titulo">Ocupación por actividad</h2>
-          <div className="ocupacion-filtros">
-            <label>
-              Club
-              <select value={clubId} onChange={e => setClubId(e.target.value)} disabled={clubes.length === 0}>
-                {clubes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-              </select>
-            </label>
-            <label>
-              Semana
-              <select value={semanaId} onChange={e => setSemanaId(e.target.value)} disabled={semanas.length === 0}>
-                {semanas.length === 0 && <option value="">Sin semanas</option>}
-                {semanas.map(s => (
-                  <option key={s.id} value={s.id}>
-                    {(s.nombre || `${s.fecha_inicio} → ${s.fecha_fin}`)}{s.estado !== 'activa' ? ' · borrador' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </header>
+      {error && <div className="error-msg">{error}</div>}
 
-        {error && <div className="error-msg">{error}</div>}
-
-        {cargandoOcup ? (
-          <p className="text-muted">Cargando ocupación...</p>
-        ) : !semanaId ? (
-          <p className="text-muted">Elige una semana para ver la ocupación.</p>
-        ) : ocupacion.length === 0 ? (
-          <div className="admin-empty"><p>No hay clases creadas en esta semana.</p></div>
-        ) : (
-          <>
-            <div className="ocupacion-resumen">
-              <span className="ocupacion-resumen-item">
-                <strong>{totalSemana.inscritos}</strong>/<strong>{totalSemana.cupo}</strong> inscritos
-              </span>
-              <span className="ocupacion-resumen-item ocup-disp">
-                {totalSemana.disponibles} disponibles
-              </span>
-              <span className="ocupacion-resumen-item text-muted">
-                {ocupacion.length} actividades
+      {!semanaId ? (
+        <p className="text-muted">Elige un club y una semana para ver el resumen.</p>
+      ) : cargandoOcup ? (
+        <p className="text-muted">Cargando resumen...</p>
+      ) : (
+        <>
+          <div className="kpi-grid">
+            <div className="kpi-card">
+              <span className="kpi-label">Inscritos / Cupos</span>
+              <span className="kpi-value">
+                {resumen?.inscritos ?? 0}<span className="kpi-sub"> / {resumen?.cupos ?? 0}</span>
               </span>
             </div>
+            <div className="kpi-card">
+              <span className="kpi-label">Cupos disponibles</span>
+              <span className="kpi-value">{resumen?.disponibles ?? 0}</span>
+            </div>
+            <div className="kpi-card">
+              <span className="kpi-label">Actividad favorita</span>
+              {resumen?.actividad_favorita ? (
+                <>
+                  <span className="kpi-value kpi-value-text">{resumen.actividad_favorita.nombre}</span>
+                  <span className="kpi-sub">{resumen.actividad_favorita.inscritos} inscritos</span>
+                </>
+              ) : (
+                <span className="kpi-value kpi-value-text text-muted">—</span>
+              )}
+            </div>
+            <div className="kpi-card">
+              <span className="kpi-label">Niños registrados</span>
+              <span className="kpi-value">{resumen?.ninos_registrados ?? 0}</span>
+            </div>
+          </div>
 
-            {categorias.map(cat => (
+          {ocupacion.length === 0 ? (
+            <div className="admin-empty"><p>No hay clases creadas en esta semana.</p></div>
+          ) : (
+            <section className="ocupacion-section">
+              <h2 className="admin-section-titulo">Ocupación por actividad</h2>
+              {categorias.map(cat => (
               <div key={cat.nombre} className="ocupacion-categoria">
                 <h3 className="ocupacion-categoria-titulo">{cat.nombre}</h3>
                 <table className="admin-tabla ocupacion-tabla">
@@ -229,20 +218,12 @@ export default function Inicio() {
                     })}
                   </tbody>
                 </table>
-              </div>
-            ))}
-          </>
-        )}
-      </section>
-    </div>
-  )
-}
-
-function KpiCard({ label, value, cargando }: { label: string; value: number | undefined; cargando: boolean }) {
-  return (
-    <div className="kpi-card">
-      <span className="kpi-label">{label}</span>
-      <span className="kpi-value">{cargando ? '…' : (value ?? 0)}</span>
+                </div>
+              ))}
+            </section>
+          )}
+        </>
+      )}
     </div>
   )
 }
